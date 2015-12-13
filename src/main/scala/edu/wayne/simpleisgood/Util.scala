@@ -6,39 +6,33 @@ import org.apache.commons.lang.StringUtils
   * Created by fsqcds on 12/11/15.
   */
 object Util {
-  def cleanPart(obj: String, preprocess: Boolean): String = {
+  def cleanPart(obj: String, preprocess: Boolean): Option[String] = {
     obj match {
       case o if o.startsWith("<") => {
         val uri = o.drop(1).dropRight(1)
         if (preprocess)
-          preprocessUri(uri)
+          Some(preprocessUri(uri))
         else
-          uri
+          Some(uri)
       }
       case o if o.startsWith("\"") => {
         val lit = o.substring(1, o.lastIndexOf("\""))
         if (preprocess)
-          preprocessLiteral(lit)
+          Some(preprocessLiteral(lit))
         else
-          lit
+          Some(lit)
       }
-      case o => ""
+      case o => None
     }
   }
 
   def preprocessUri(uri: String): String = {
-//    splitCamelCase(removePunct(uri.substring(uri.lastIndexOf("/") + 1, uri.length)))
     removePunct(uri.substring(uri.lastIndexOf("/") + 1, uri.length))
   }
 
   def preprocessLiteral(lit: String): String = {
-//    splitCamelCase(removePunct(lit))
     removePunct(lit)
   }
-
-//  def splitCamelCase(part: String): String = {
-//    StringUtils.splitByCharacterTypeCamelCase(part).mkString(" ")
-//  }
 
   def removePunct(part: String): String = {
     part.replaceAll( """\p{Punct}""", " ")

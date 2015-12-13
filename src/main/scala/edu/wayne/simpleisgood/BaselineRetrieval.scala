@@ -3,8 +3,6 @@ package edu.wayne.simpleisgood
 import org.apache.spark.SparkContext._
 import org.apache.spark.{SparkConf, SparkContext}
 
-import scala.util.Try
-
 
 /**
   * Created by fsqcds on 12/10/15.
@@ -21,12 +19,10 @@ object BaselineRetrieval {
     val descriptions = sc.textFile(pathToEntityDescriptions)
 
     val subjObjs = descriptions.flatMap { line =>
-      Try {
-        val splitLine = line.split(" ")
-        val subj = Util.cleanPart(splitLine(0), false)
-        val obj = Util.cleanPart(Util.extractObject(line), preprocess)
-        (subj, obj)
-      }.toOption
+      val splitLine = line.split(" ")
+      val subj = Util.cleanPart(splitLine(0), false)
+      val obj = Util.cleanPart(Util.extractObject(line), preprocess)
+      for (a <- subj; b <- obj) yield (a, b)
     }.groupByKey.flatMap { case (subj, objs) =>
       Array("<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>") ++
         objs.filter(o => o.nonEmpty) ++
