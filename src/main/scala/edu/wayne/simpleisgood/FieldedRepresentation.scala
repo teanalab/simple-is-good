@@ -16,6 +16,7 @@ object FieldedRepresentation {
     val preprocess = args(2) == "pre"
 
     val conf = new SparkConf().setAppName("BaselineRetrieval")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     val sc = new SparkContext(conf)
     val descriptions = sc.textFile(pathToEntityDescriptions)
 
@@ -31,18 +32,24 @@ object FieldedRepresentation {
         else
           (subj, ("", obj))
       }.toOption
-    }.groupByKey.map { case (subj, objPairs) => {
-      val titleObjs = objPairs.map(pair => pair._1).filter(titleObj => titleObj.nonEmpty).mkString("\n")
-      val objs = objPairs.map(pair => pair._2).filter(obj => obj.nonEmpty).mkString("\n")
-      "<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>\n" +
+    }.groupByKey.flatMap { case (subj, objPairs) => {
+      val titleObjs = objPairs.map(pair => pair._1).filter(titleObj => titleObj.nonEmpty)
+      val objs = objPairs.map(pair => pair._2).filter(obj => obj.nonEmpty)
+      Array(
+        "<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>") ++
         (if (titleObjs.nonEmpty)
-          "<title>\n" + titleObjs + "\n</title>\n"
+          Array("<title>") ++
+            titleObjs ++
+            Array("</title>")
         else
-          "") +
+          Array[String]()) ++
         (if (objs.nonEmpty)
-          "<content>\n" + objs + "\n</content>\n"
+          Array("<content>") ++
+            objs ++
+            Array("</content>")
         else
-          "") + "</TEXT>\n</DOC>"
+          Array[String]()) ++
+        Array("</TEXT>\n</DOC>")
     }
     }.saveAsTextFile(pathToOutput)
   }

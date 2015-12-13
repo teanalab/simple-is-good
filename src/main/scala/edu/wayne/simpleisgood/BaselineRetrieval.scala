@@ -16,6 +16,7 @@ object BaselineRetrieval {
     val preprocess = args(2) == "pre"
 
     val conf = new SparkConf().setAppName("BaselineRetrieval")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     val sc = new SparkContext(conf)
     val descriptions = sc.textFile(pathToEntityDescriptions)
 
@@ -26,8 +27,10 @@ object BaselineRetrieval {
         val obj = Util.cleanPart(Util.extractObject(line), preprocess)
         (subj, obj)
       }.toOption
-    }.groupByKey.map { case (subj, objs) =>
-      "<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>\n" + objs.filter(o => o.nonEmpty).mkString("\n") + "\n</TEXT>\n</DOC>"
+    }.groupByKey.flatMap { case (subj, objs) =>
+      Array("<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>") ++
+        objs.filter(o => o.nonEmpty) ++
+        Array("</TEXT>\n</DOC>")
     }.saveAsTextFile(pathToOutput)
   }
 }
