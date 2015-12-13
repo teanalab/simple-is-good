@@ -24,26 +24,26 @@ object FieldedRepresentation {
       Try {
         val subj = Util.cleanPart(splitLine(0), false)
         val pred = Util.cleanPart(splitLine(1), false).toLowerCase
-        val obj = Util.cleanPart(splitLine(2), preprocess)
+        val obj = Util.cleanPart(Util.extractObject(line), preprocess)
 
         if (pred.endsWith("name") || pred.endsWith("label") || pred.endsWith("title"))
-          (subj, (Some(obj), obj))
+          (subj, (obj, obj))
         else
-          (subj, (None, obj))
+          (subj, ("", obj))
       }.toOption
-    }.reduceByKey { (a, b) =>
-      (if (a._1.isEmpty && b._1.isEmpty)
-        None
-      else
-        Some(Seq(a._1, b._1).flatten.mkString("\n")),
-        a._2 + "\n" + b._2)
-    }.map { case (subj, (titleObjs, contentObjs)) =>
-      "<DOC>\n<DOCNO>\n" + subj + "\n<TEXT>\n" +
-        (titleObjs match {
-          case Some(title) => "<title>\n" + title + "\n</title>\n"
-          case None => ""
-        }) +
-        "<content>\n" + contentObjs + "\n</content>\n<TEXT>"
+    }.groupByKey.map { case (subj, objPairs) => {
+      val titleObjs = objPairs.map(pair => pair._1).filter(titleObj => titleObj.nonEmpty).mkString("\n")
+      val objs = objPairs.map(pair => pair._2).filter(obj => obj.nonEmpty).mkString("\n")
+      "<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>\n" +
+        (if (titleObjs.nonEmpty)
+          "<title>\n" + titleObjs + "\n</title>\n"
+        else
+          "") +
+        (if (objs.nonEmpty)
+          "<content>\n" + objs + "\n</content>\n"
+        else
+          "") + "</TEXT>\n</DOC>"
+    }
     }.saveAsTextFile(pathToOutput)
   }
 }

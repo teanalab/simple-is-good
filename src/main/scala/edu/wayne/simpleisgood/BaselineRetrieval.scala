@@ -23,11 +23,11 @@ object BaselineRetrieval {
       Try {
         val splitLine = line.split(" ")
         val subj = Util.cleanPart(splitLine(0), false)
-        val obj = Util.cleanPart(splitLine(2), preprocess)
+        val obj = Util.cleanPart(Util.extractObject(line), preprocess)
         (subj, obj)
       }.toOption
-    }.reduceByKey(_ + "\n" + _).map { case (subj, objs) =>
-      "<DOC>\n<DOCNO>\n" + subj + "\n<TEXT>\n" + objs + "\n<TEXT>"
+    }.groupByKey.map { case (subj, objs) =>
+      "<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>\n" + objs.filter(o => o.nonEmpty).mkString("\n") + "\n</TEXT>\n</DOC>"
     }.saveAsTextFile(pathToOutput)
   }
 }

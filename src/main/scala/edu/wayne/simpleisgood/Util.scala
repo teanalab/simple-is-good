@@ -27,18 +27,24 @@ object Util {
   }
 
   def preprocessUri(uri: String): String = {
-    splitCamelCase(removePunct(uri.substring(uri.lastIndexOf("/") + 1, uri.length)))
+//    splitCamelCase(removePunct(uri.substring(uri.lastIndexOf("/") + 1, uri.length)))
+    removePunct(uri.substring(uri.lastIndexOf("/") + 1, uri.length))
   }
 
   def preprocessLiteral(lit: String): String = {
-    splitCamelCase(removePunct(lit))
+//    splitCamelCase(removePunct(lit))
+    removePunct(lit)
   }
 
-  def splitCamelCase(part: String): String = {
-    StringUtils.splitByCharacterTypeCamelCase(part).mkString(" ")
-  }
+//  def splitCamelCase(part: String): String = {
+//    StringUtils.splitByCharacterTypeCamelCase(part).mkString(" ")
+//  }
 
   def removePunct(part: String): String = {
     part.replaceAll( """\p{Punct}""", " ")
+  }
+
+  def extractObject(nquad: String): String = {
+    nquad.substring(nquad.indexOf(' ', nquad.indexOf(' ') + 1) + 1, nquad.lastIndexOf(' ', nquad.lastIndexOf(' ') - 1))
   }
 }
