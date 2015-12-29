@@ -25,7 +25,7 @@ object URIasTitle {
     }.groupByKey.flatMap { case (subj, objs) =>
       Array("<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>") ++
         Array("<title>") ++
-        subj ++
+        Array(subj) ++
         Array("</title>\n<content>") ++
         objs.filter(o => o.nonEmpty) ++
         Array("</content>\n</TEXT>\n</DOC>")
