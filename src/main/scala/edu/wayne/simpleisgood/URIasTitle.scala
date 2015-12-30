@@ -11,6 +11,7 @@ object URIasTitle {
   def main(args: Array[String]): Unit = {
     val pathToEntityDescriptions = args(0)
     val pathToOutput = args(1)
+    val preprocess = args(2) == "pre"
 
     val conf = new SparkConf().setAppName("BaselineRetrieval")
     conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
@@ -20,12 +21,17 @@ object URIasTitle {
     val subjObjs = descriptions.flatMap { line =>
       val splitLine = line.split(" ")
       val subj = Util.cleanPart(splitLine(0), false)
-      val obj = Util.cleanPart(Util.extractObject(line), false)
+      val obj = Util.cleanPart(Util.extractObject(line), preprocess)
       for (a <- subj; b <- obj) yield (a, b)
     }.groupByKey.flatMap { case (subj, objs) =>
       Array("<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>") ++
         Array("<title>") ++
-        Array(subj) ++
+        Array(
+          if (preprocess)
+            Util.preprocessUri(subj)
+          else
+            subj
+        ) ++
         Array("</title>\n<content>") ++
         objs.filter(o => o.nonEmpty) ++
         Array("</content>\n</TEXT>\n</DOC>")
