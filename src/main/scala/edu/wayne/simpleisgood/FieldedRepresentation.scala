@@ -12,6 +12,7 @@ object FieldedRepresentation {
     val pathToEntityDescriptions = args(0)
     val pathToOutput = args(1)
     val preprocess = args(2) == "pre"
+    val triples = args(3) == "tri" // otherwise quads
 
     val conf = new SparkConf().setAppName("BaselineRetrieval")
     conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
@@ -24,7 +25,7 @@ object FieldedRepresentation {
       val pred = Util.cleanPart(splitLine(1), false) map {
         _.toLowerCase
       }
-      val obj = Util.cleanPart(Util.extractObject(line), preprocess)
+      val obj = Util.cleanPart(Util.extractObject(line, triples), preprocess)
 
       if (subj.isEmpty || pred.isEmpty || obj.isEmpty) {
         None

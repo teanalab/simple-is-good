@@ -12,6 +12,7 @@ object FieldedLiteralsOnlyGalago {
     val pathToEntityDescriptions = args(0)
     val pathToOutput = args(1)
     val preprocess = args(2) == "pre" // we add URI to title if preprocess
+    val triples = args(3) == "tri" // otherwise quads
 
     val conf = new SparkConf().setAppName("BaselineRetrieval")
     conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
@@ -24,7 +25,7 @@ object FieldedLiteralsOnlyGalago {
       val pred = Util.cleanPart(splitLine(1), false) map {
         _.toLowerCase
       }
-      val rawObj = Util.extractObject(line)
+      val rawObj = Util.extractObject(line, triples)
 
       if (subj.isEmpty || pred.isEmpty || rawObj.isEmpty || !rawObj.startsWith("\"")) {
         if (subj.isEmpty)

@@ -12,6 +12,8 @@ object FieldedLiteralsOnly {
     val pathToEntityDescriptions = args(0)
     val pathToOutput = args(1)
     val preprocess = args(2) == "pre" // we add URI to title if preprocess
+    val triples = args(3) == "tri" // otherwise quads
+    val prefix = args(4) // filter resources by URI prefix
 
     val conf = new SparkConf().setAppName("BaselineRetrieval")
     conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
@@ -24,7 +26,7 @@ object FieldedLiteralsOnly {
       val pred = Util.cleanPart(splitLine(1), false) map {
         _.toLowerCase
       }
-      val rawObj = Util.extractObject(line)
+      val rawObj = Util.extractObject(line, triples)
 
       if (subj.isEmpty || pred.isEmpty || rawObj.isEmpty || !rawObj.startsWith("\"")) {
         if (subj.isEmpty)
@@ -38,7 +40,7 @@ object FieldedLiteralsOnly {
         else
           Some(subj.get, (None, obj))
       }
-    }.groupByKey.flatMap { case (subj, objPairs) => {
+    }.groupByKey.flatMap { case (subj, objPairs) if subj.startsWith(prefix) => {
       val titleObjs = objPairs.map(pair => pair._1).filter(titleObj => titleObj.nonEmpty)
       val objs = objPairs.map(pair => pair._2).filter(obj => obj.nonEmpty)
       Array("<DOC>\n<DOCNO>" + subj + "</DOCNO>\n<TEXT>") ++
@@ -59,6 +61,7 @@ object FieldedLiteralsOnly {
           Array[String]()) ++
         Array("</content>\n</TEXT>\n</DOC>")
     }
+    case _ => Array[String]()
     }.saveAsTextFile(pathToOutput)
   }
 }

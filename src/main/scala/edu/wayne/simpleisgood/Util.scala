@@ -3,8 +3,6 @@ package edu.wayne.simpleisgood
 import java.io.StringReader
 
 import edu.wayne.simpleisgood.belegaer.DbpediaLiteralAnalyzer
-import edu.wayne.simpleisgood.belegaer.DbpediaLiteralAnalyzer
-import org.apache.commons.lang.StringUtils
 import org.apache.lucene.analysis.TokenStream
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 
@@ -46,8 +44,11 @@ object Util {
     part.replaceAll( """\p{Punct}""", " ")
   }
 
-  def extractObject(nquad: String): String = {
-    nquad.substring(nquad.indexOf(' ', nquad.indexOf(' ') + 1) + 1, nquad.lastIndexOf(' ', nquad.lastIndexOf(' ') - 1))
+  def extractObject(tuple: String, ntriple: Boolean): String = {
+    if (!ntriple)
+      tuple.substring(tuple.indexOf(' ', tuple.indexOf(' ') + 1) + 1, tuple.lastIndexOf(' ', tuple.lastIndexOf(' ') - 1))
+    else
+      tuple.substring(tuple.indexOf(' ', tuple.indexOf(' ') + 1) + 1, tuple.lastIndexOf(' '))
   }
 
   private val analyzer = new DbpediaLiteralAnalyzer(1, true)
